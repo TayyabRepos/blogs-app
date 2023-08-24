@@ -1,18 +1,16 @@
 import "./App.css";
-import Header from "./Header";
-import Nav from "./Nav.js";
-import Footer from "./Footer.js";
+import Layout from "./Layout";
 import Home from "./Home.js";
 import NewPost from "./Newpost.js";
 import PostPage from "./PostPage.js";
 import About from "./About.js";
 import Missing from "./Missing.js";
-import { Route, useHistory, Switch } from "react-router-dom";
+import { Route, useNavigate, Routes } from "react-router-dom";
 import { useState, useEffect } from "react";
 import format from "date-fns/format";
 
 function App() {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([
     {
       id: 1,
@@ -54,54 +52,55 @@ function App() {
     setPosts(allPosts);
     setpostTitle("");
     setpostBody("");
-    history.push("/")
+    navigate("/");
   };
 
   const handleDelete = (id) => {
     const postList = posts.filter((post) => post.id !== id);
     setPosts(postList);
-    history.push("/");
+    navigate("/");
   };
 
- 
-
   useEffect(() => {
-    const filteredResults = posts.filter((post) =>
-      ((post.body).toLowerCase()).includes(search.toLowerCase())
-      || ((post.title).toLowerCase()).includes(search.toLowerCase()));
+    const filteredResults = posts.filter(
+      (post) =>
+        post.body.toLowerCase().includes(search.toLowerCase()) ||
+        post.title.toLowerCase().includes(search.toLowerCase())
+    );
 
     setSearchResults(filteredResults.reverse());
-  }, [posts, search])
-  
+  }, [posts, search]);
+
   return (
-    <div className="App">
-      <Header title="React Blog App" />
-      <Nav  
-      search={search}
-      setSearch={setSearch}/>
-      <Switch>
-        <Route exact path="/">
-          <Home posts={searchResults} />
-        </Route>
-        <Route exact path="/post">
-          <NewPost
-            postTitle={postTitle}
-            setpostTitle={setpostTitle}
-            postBody={postBody}
-            setpostBody={setpostBody}
-            handleSubmit={handleSubmit}
+    <Routes>
+      <Route
+        path="/"
+        element={<Layout search={search} setSearch={setSearch} />}
+      >
+        <Route index element={<Home posts={searchResults} />} />
+
+        <Route path="post">
+          <Route
+            index
+            element={
+              <NewPost
+                handleSubmit={handleSubmit}
+                postTitle={postTitle}
+                postBody={postBody}
+                setpostTitle={setpostTitle}
+                setpostBody={setpostBody}
+              />
+            }
+          />
+          <Route
+            path=":id"
+            element={<PostPage posts={posts} handleDelete={handleDelete} />}
           />
         </Route>
-
-        <Route path="/post/:id">
-          <PostPage posts={posts} handleDelete={handleDelete} />
-        </Route>
-
-        <Route path="/about" component={About} />
-        <Route path="*" component={Missing} />
-      </Switch>
-      <Footer />
-    </div>
+        <Route path="about" element={<About />} />
+        <Route path="*" element={<Missing />} />
+      </Route>
+    </Routes>
   );
 }
 
